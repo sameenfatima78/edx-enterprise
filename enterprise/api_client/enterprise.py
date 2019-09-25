@@ -41,8 +41,9 @@ class EnterpriseApiClient(JwtLmsApiClient):
             list: List of dicts containing content metadata.
         """
         content_metadata = OrderedDict()
-
-        for enterprise_customer_catalog in enterprise_customer.enterprise_customer_catalogs.all():
+        enterprise_customer_catalogs = enterprise_customer.customer_catalogs if enterprise_customer.customer_catalogs \
+            else enterprise_customer.enterprise_customer_catalogs.all()
+        for enterprise_customer_catalog in enterprise_customer_catalogs:
             response = self._load_data(
                 self.ENTERPRISE_CUSTOMER_CATALOGS_ENDPOINT,
                 resource_id=str(enterprise_customer_catalog.uuid),

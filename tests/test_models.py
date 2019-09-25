@@ -150,6 +150,19 @@ class TestEnterpriseCustomer(unittest.TestCase):
         )
         self.assertEqual(method(customer), expected_to_str)
 
+    def test_customer_catalogs(self):
+        """
+        Test identity_provider property returns correct value without errors.
+        """
+        customer = factories.EnterpriseCustomerFactory()
+        customer_catalog = factories.EnterpriseCustomerCatalogFactory(
+            enterprise_customer=customer
+        )
+        customer.catalog_uuids = str([str(customer_catalog.uuid)])
+        customer.save()
+        assert customer.customer_catalogs.count() == 1
+        assert customer.customer_catalogs.first() == customer_catalog
+
     def test_identity_provider(self):
         """
         Test identity_provider property returns correct value without errors.

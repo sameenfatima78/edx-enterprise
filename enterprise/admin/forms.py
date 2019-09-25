@@ -314,6 +314,11 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
     """
     Alternate form for the EnterpriseCustomer admin page.
     """
+    enterprise_customer_catalogs = forms.ModelMultipleChoiceField(
+        EnterpriseCustomerCatalog.objects.all(),
+        required=False,
+    )
+
     class Meta:
         model = EnterpriseCustomer
         fields = (
@@ -333,7 +338,44 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "enable_learner_portal",
             "learner_portal_hostname",
             "enable_portal_reporting_config_screen",
+            # "catalog_uuids",
         )
+
+    def __init__(self, *args, **kwargs):
+        super(EnterpriseCustomerAdminForm, self).__init__(*args, **kwargs)
+        enterprise_customer = kwargs.get('instance', None)
+        self.fields["enterprise_customer_catalogs"].queryset = EnterpriseCustomerCatalog.objects.filter(
+            enterprise_customer=enterprise_customer
+        )
+        self.fields["enterprise_customer_catalogs"].initial = enterprise_customer.customer_catalogs
+
+    def save(self, commit=True):    # pylint: disable=unused-argument
+        instance = super(EnterpriseCustomerAdminForm, self).save(commit=False)
+        enterprise_customer_catalogs = self.cleaned_data.get('enterprise_customer_catalogs')
+        instance.catalog_uuids = [str(catalog.uuid) for catalog in enterprise_customer_catalogs]
+        instance.save()
+        return instance
+
+    # def clean_catalog_uuids(self):
+    #     invalid_uuids = []
+    #     catalog_uuids = self.cleaned_data.get('catalog_uuids', None)
+    #     if catalog_uuids:
+    #         try:
+    #             catalog_uuids_list = json.loads(catalog_uuids)
+    #             if not isinstance(catalog_uuids_list, list):
+    #                 raise ValueError
+    #
+    #             for catalog_uuid in catalog_uuids_list:
+    #                 if not EnterpriseCustomerCatalog.objects.filter(uuid=catalog_uuid.strip()).exists():
+    #                     invalid_uuids.append(catalog_uuid)
+    #             if invalid_uuids:
+    #                 raise ValidationError(
+    #                     ValidationMessages.CATALOG_NOT_FOUND.format(
+    #                         catalog_uuids=", ".join(invalid_uuids),
+    #                     )
+    #                 )
+    #         except ValueError:
+    #             raise ValidationError(_('Catalog UUIDs should be a list with valid EnterpriseCustomerCatalog UUIDs.'))
 
 
 class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):

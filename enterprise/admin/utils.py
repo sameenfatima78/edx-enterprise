@@ -96,6 +96,7 @@ class ValidationMessages(object):
     INVALID_CHANNEL_WORKER = _(
         'Enterprise channel worker user with the username "{channel_worker_username}" was not found.'
     )
+    # CATALOG_NOT_FOUND = _('These UUIDs [{catalog_uuids}] do not exist in customer catalogs.')
 
 
 def parse_csv(file_stream, expected_columns=None):

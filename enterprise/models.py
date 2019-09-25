@@ -4,6 +4,7 @@ Database models for enterprise.
 """
 from __future__ import absolute_import, unicode_literals
 
+import ast
 import collections
 import os
 from logging import getLogger
@@ -261,6 +262,13 @@ class EnterpriseCustomer(TimeStampedModel):
         default='',
         help_text=_("Hostname of the enterprise learner portal, e.g. bestrun.edx.org.")
     )
+    catalog_uuids = models.TextField(
+        blank=True,
+        null=True,
+        default=[],
+        verbose_name="Catalog UUIDs",
+        help_text=_("A comma-separated list of catalog UUIDs to transmit.")
+    )
 
     @property
     def identity_provider(self):
@@ -288,6 +296,22 @@ class EnterpriseCustomer(TimeStampedModel):
             )
         except ObjectDoesNotExist:
             return False
+
+    @property
+    def customer_catalogs(self):
+        """
+        Return the list of EnterpriseCustomerCatalog objects.
+        """
+        enterprise_customer_catalogs = []
+        try:
+            enterprise_customer_catalogs = EnterpriseCustomerCatalog.objects.filter(
+                uuid__in=ast.literal_eval(
+                    self.catalog_uuids
+                )
+            )
+        except ValueError:
+            pass
+        return enterprise_customer_catalogs
 
     def __str__(self):
         """

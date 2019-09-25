@@ -112,6 +112,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_portal_reporting_config_screen",
                 "enable_learner_portal",
                 "learner_portal_hostname",
+                "catalog_uuids",
             ]
         ),
         (

@@ -5,6 +5,7 @@ Database models for Enterprise Integrated Channel.
 
 from __future__ import absolute_import, unicode_literals
 
+import ast
 import json
 import logging
 
@@ -17,7 +18,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
-from enterprise.models import EnterpriseCustomer
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerCatalog
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
@@ -61,6 +62,11 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         null=True,
         help_text=_("Enterprise channel worker username to get JWT tokens for authenticating LMS APIs."),
     )
+    catalogs_to_transmit = models.TextField(
+        blank=True,
+        null=True,
+        help_text=_("A comma-separated list of catalog UUIDs to transmit.")
+    )
 
     class Meta:
         abstract = True
@@ -72,6 +78,24 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         """
         worker_username = self.channel_worker_username if self.channel_worker_username else 'enterprise_channel_worker'
         return User.objects.filter(username=worker_username).first()
+
+    @property
+    def customer_catalogs_to_transmit(self):
+        """
+        Return the list of EnterpriseCustomerCatalog objects.
+        """
+        enterprise_customer_catalogs = []
+        try:
+            enterprise_customer_catalogs = EnterpriseCustomerCatalog.objects.filter(
+                uuid__in=ast.literal_eval(self.catalogs_to_transmit)
+            )
+        except ValueError:
+            LOGGER.error(
+                "'{class_name}' has invalid list of UUIDs of catalogs for transmission.".format(
+                    class_name=type(self).__name__
+                )
+            )
+        return enterprise_customer_catalogs
 
     @staticmethod
     def channel_code():

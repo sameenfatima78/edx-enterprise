@@ -12,6 +12,7 @@ import logging
 from jsonfield.fields import JSONField
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
@@ -86,13 +87,16 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         """
         enterprise_customer_catalogs = []
         try:
+            catalogs_uuids = ast.literal_eval(self.catalogs_to_transmit or str(list()))
             enterprise_customer_catalogs = EnterpriseCustomerCatalog.objects.filter(
-                uuid__in=ast.literal_eval(self.catalogs_to_transmit)
+                uuid__in=catalogs_uuids
             )
-        except ValueError:
+        except (ValidationError, ValueError):
             LOGGER.error(
-                "'{class_name}' has invalid list of UUIDs of catalogs for transmission.".format(
-                    class_name=type(self).__name__
+                "{class_name} class for '{enterprise_customer}' customer has invalid list of UUIDs of "
+                "catalogs for transmission.".format(
+                    class_name=type(self).__name__,
+                    enterprise_customer=self.enterprise_customer.name
                 )
             )
         return enterprise_customer_catalogs
